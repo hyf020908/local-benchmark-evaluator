@@ -131,13 +131,6 @@ async function submitEvaluation() {
   }
 }
 
-function applyExamplePath(item: DatasetInfo) {
-  if (item.example_path) {
-    form.dataset_type = item.key
-    form.dataset_path = item.example_path
-  }
-}
-
 async function openHistory(jobId: string) {
   currentJob.value = await fetchEvaluation(jobId)
   activeTab.value = 'samples'
@@ -258,20 +251,6 @@ onBeforeUnmount(() => {
           </el-button>
           <el-button size="large" :icon="RefreshRight" @click="loadInitialData">刷新</el-button>
         </div>
-
-        <section class="dataset-gallery">
-          <div class="section-title">预置数据路径</div>
-          <button
-            v-for="item in datasets"
-            :key="item.key"
-            type="button"
-            class="dataset-chip"
-            @click="applyExamplePath(item)"
-          >
-            <span>{{ item.label }}</span>
-            <small>{{ item.example_path || '未发现本地预置路径' }}</small>
-          </button>
-        </section>
       </aside>
 
       <section class="right-panel">

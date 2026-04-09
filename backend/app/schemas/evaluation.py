@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -30,7 +30,6 @@ class DatasetInfo(BaseModel):
     key: str
     label: str
     description: str
-    example_path: Optional[str] = None
     supports_auto_detect: bool = True
 
 

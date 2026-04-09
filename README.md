@@ -6,10 +6,8 @@
 
 - 前端：Vue 3 + TypeScript + Vite + Element Plus
 - 后端：FastAPI + Pydantic + HTTPX
-- 数据源：本地 benchmark 仓库目录，必要时回退官方数据源
+- 数据源：用户手动下载到本地的 benchmark 目录，必要时回退官方数据源
 - 输出：每次任务生成独立 JSON 结果文件
-
-前端预置路径仅指向当前工作区中实际存在的本地 benchmark 根目录。
 
 ## 支持的数据集
 
@@ -19,7 +17,7 @@
 | MMLU-Pro | 本地目录识别 | `validation/*.jsonl|json` 与 `test/*.jsonl|json`；或官方仓库根目录 |
 | C-Eval | 本地目录识别 | `data/dev/*.csv` 与 `data/val/*.csv`；或官方仓库根目录 |
 | CMMLU | 本地目录识别 | `data/dev/*.csv` 与 `data/test/*.csv` |
-| TruthfulQA | 本地目录识别 | `data/mc_task.json` |
+| TruthfulQA | 本地目录识别 | `TruthfulQA.csv` 与 `data/mc_task.json` |
 | GSM8K | 本地目录识别 | `train.jsonl|json` 与 `test.jsonl|json` |
 
 ## 官方仓库根目录回退策略
@@ -29,10 +27,25 @@
 - `MMLU-Pro`
   官方仓库根目录通常包含 `eval_results/*.zip` 与评测脚本，但不一定包含 `validation`、`test` 原始数据。系统优先读取本地 `eval_results/*.zip` 中的官方结果包；若未命中，再读取官方 Hugging Face 数据源 `TIGER-Lab/MMLU-Pro`。
 
-## 预置路径
+## 数据集准备
 
-系统会优先暴露当前工作区中实际存在的 benchmark 根目录。
-若某个 benchmark 根目录不存在，对应预置路径字段返回空值。
+使用前需要先把对应数据集下载到本地，然后在前端表单里手动填写数据集绝对路径。
+
+- MMLU: `https://github.com/hendrycks/test`
+- MMLU-Pro: `https://github.com/TIGER-AI-Lab/MMLU-Pro`
+- C-Eval: `https://github.com/hkust-nlp/ceval`
+- CMMLU: `https://github.com/haonan-li/CMMLU`
+- GSM8K: `https://github.com/openai/grade-school-math`
+- TruthfulQA: `https://github.com/sylinrl/TruthfulQA`
+
+示例：
+
+```bash
+git clone https://github.com/TIGER-AI-Lab/MMLU-Pro.git /path/to/MMLU-Pro
+git clone https://github.com/hkust-nlp/ceval.git /path/to/ceval
+```
+
+下载完成后，请确认你填写的目录能够满足下文的数据集目录要求。若仓库根目录与本项目要求不完全一致，请先自行整理到对应结构后再填写路径。
 
 ## 目录结构
 
@@ -193,6 +206,7 @@ uvicorn mock_model_server:app --host 127.0.0.1 --port 8001
 
 ```text
 /absolute/path/to/TruthfulQA/
+├── TruthfulQA.csv
 └── data/
     └── mc_task.json
 ```

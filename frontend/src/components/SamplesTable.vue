@@ -42,13 +42,25 @@ const rows = computed(() => props.items.slice(0, 50))
 </template>
 
 <style scoped>
+.samples-table {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #f1f5f9;
+}
+
+.samples-table :deep(.el-table__header) {
+  background-color: #f8fafc;
+}
+
 .samples-table :deep(.el-table__cell) {
   vertical-align: top;
+  padding: 12px 0;
 }
 
 .cell-text {
-  color: #20383d;
-  line-height: 1.55;
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
 }

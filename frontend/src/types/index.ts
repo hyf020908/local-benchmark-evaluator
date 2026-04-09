@@ -2,7 +2,6 @@ export interface DatasetInfo {
   key: string
   label: string
   description: string
-  example_path?: string | null
   supports_auto_detect: boolean
 }
 

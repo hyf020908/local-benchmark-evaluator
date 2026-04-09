@@ -5,7 +5,7 @@ import json
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import HTTPException
 
@@ -18,20 +18,6 @@ from app.services.model_client import ModelClientError, OpenAICompatibleClient
 
 
 class EvaluationService:
-    def _resolve_example_path(self, dataset_key: str) -> Optional[str]:
-        authoritative_roots = {
-            "mmlu_pro": settings.benchmarks_root / "MMLU-Pro",
-            "ceval": settings.benchmarks_root / "ceval",
-            "cmmlu": settings.benchmarks_root / "CMMLU",
-            "truthfulqa": settings.benchmarks_root / "TruthfulQA",
-            "mmlu": settings.benchmarks_root / "MMLU",
-            "gsm8k": settings.benchmarks_root / "GSM8K",
-        }
-        candidate = authoritative_roots.get(dataset_key)
-        if candidate and candidate.exists():
-            return str(candidate.resolve())
-        return None
-
     def list_supported_datasets(self) -> list[DatasetInfo]:
         datasets: list[DatasetInfo] = []
         for evaluator in registry.list():
@@ -40,7 +26,6 @@ class EvaluationService:
                     key=evaluator.key,
                     label=evaluator.label,
                     description=evaluator.description,
-                    example_path=self._resolve_example_path(evaluator.key),
                 )
             )
         return datasets

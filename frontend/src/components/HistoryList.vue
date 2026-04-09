@@ -43,31 +43,35 @@ const emit = defineEmits<{
 <style scoped>
 .history-list {
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
 .history-empty {
-  padding: 24px;
-  border-radius: 16px;
-  color: #6e8183;
-  background: rgba(248, 248, 245, 0.8);
-  border: 1px dashed rgba(20, 48, 52, 0.16);
+  padding: 48px 24px;
+  text-align: center;
+  border-radius: 20px;
+  color: #94a3b8;
+  background: rgba(248, 250, 252, 0.5);
+  border: 1px dashed #e2e8f0;
+  font-size: 14px;
 }
 
 .history-item {
   text-align: left;
   width: 100%;
-  padding: 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(20, 48, 52, 0.12);
-  background: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: white;
   cursor: pointer;
-  transition: transform 140ms ease, box-shadow 140ms ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .history-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 26px rgba(17, 32, 36, 0.07);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-color: #6366f1;
 }
 
 .history-item__head,
@@ -80,19 +84,32 @@ const emit = defineEmits<{
 }
 
 .history-item__head {
-  font-weight: 600;
-  color: #163135;
-  margin-bottom: 10px;
+  font-weight: 700;
+  font-size: 16px;
+  color: #1e293b;
+  margin-bottom: 12px;
 }
 
 .history-item__meta {
   justify-content: flex-start;
-  color: #627678;
-  margin-bottom: 10px;
+  color: #64748b;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.history-item__meta .el-icon {
+  color: #6366f1;
+  font-size: 16px;
 }
 
 .history-item__foot {
-  color: #7b8d8f;
+  color: #94a3b8;
   font-size: 12px;
+  font-weight: 500;
+}
+
+.history-item__foot span:last-child {
+  color: #6366f1;
+  font-weight: 700;
 }
 </style>
