@@ -18,7 +18,13 @@ class BaseEvaluator(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def load(self, dataset_path: Path, max_samples: int, few_shot: int) -> PreparedDataset:
+    def load(
+        self,
+        dataset_path: Path,
+        max_samples: int,
+        few_shot: int,
+        random_seed: int,
+    ) -> PreparedDataset:
         raise NotImplementedError
 
     @abstractmethod

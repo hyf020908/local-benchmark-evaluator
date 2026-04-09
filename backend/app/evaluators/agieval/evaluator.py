@@ -11,10 +11,12 @@ from app.evaluators.common.io import load_json_records
 from app.evaluators.common.models import EvaluationSample, PreparedDataset
 from app.evaluators.common.parsing import (
     extract_final_answer_text,
+    extract_multi_choice,
     extract_single_choice,
     normalize_freeform_answer,
     strip_option_prefix,
 )
+from app.evaluators.common.sampling import choose_random_samples
 
 
 class AGIEvalEvaluator(BaseEvaluator):
@@ -26,7 +28,9 @@ class AGIEvalEvaluator(BaseEvaluator):
         data_dir = self._resolve_data_dir(dataset_path)
         return bool(data_dir and any(data_dir.glob("*.jsonl")))
 
-    def load(self, dataset_path: Path, max_samples: int, few_shot: int) -> PreparedDataset:
+    def load(
+        self, dataset_path: Path, max_samples: int, few_shot: int, random_seed: int
+    ) -> PreparedDataset:
         data_dir = self._resolve_data_dir(dataset_path)
         if not data_dir:
             raise ValueError("AGIEval 目录格式不正确，需包含 data/v1_1 或 data/v1 下的 JSONL 任务文件。")
@@ -34,15 +38,13 @@ class AGIEvalEvaluator(BaseEvaluator):
         demonstrations = self._load_few_shot_prompts(dataset_path, data_dir)
         samples: list[EvaluationSample] = []
         for path in sorted(data_dir.glob("*.jsonl")):
-            if len(samples) >= max_samples:
-                break
-            samples.extend(self._load_records(path)[: max_samples - len(samples)])
+            samples.extend(self._load_records(path))
 
         return PreparedDataset(
             dataset_key=self.key,
             dataset_name=self.label,
             dataset_path=str(dataset_path),
-            samples=samples[:max_samples],
+            samples=choose_random_samples(samples, max_samples, random_seed),
             demonstrations_by_group=demonstrations,
         )
 
@@ -54,6 +56,12 @@ class AGIEvalEvaluator(BaseEvaluator):
             instructions = (
                 "You are evaluating a model on the AGIEval benchmark. "
                 "Answer the multiple-choice question and end with `Final Answer: X`."
+            )
+        elif task_format == "multi_choice":
+            instructions = (
+                "You are evaluating a model on the AGIEval benchmark. "
+                "Answer the multiple-choice question and end with all correct options in "
+                "`Final Answer: XYZ` format."
             )
         else:
             instructions = (
@@ -70,15 +78,23 @@ class AGIEvalEvaluator(BaseEvaluator):
         return "\n\n".join(parts)
 
     def parse_prediction(self, raw_output: str, sample: EvaluationSample) -> Optional[str]:
-        if sample.metadata.get("format") == "mcq":
+        task_format = sample.metadata.get("format")
+        if task_format == "mcq":
             return extract_single_choice(raw_output, len(sample.options))
+        if task_format == "multi_choice":
+            return extract_multi_choice(raw_output, len(sample.options))
         return extract_final_answer_text(raw_output)
 
     def is_correct(self, sample: EvaluationSample, parsed_prediction: Optional[str]) -> bool:
         if not parsed_prediction:
             return False
-        if sample.metadata.get("format") == "mcq":
+        task_format = sample.metadata.get("format")
+        if task_format == "mcq":
             return parsed_prediction.upper() == sample.answer.upper()
+        if task_format == "multi_choice":
+            return self._canonical_multi_answer(parsed_prediction) == self._canonical_multi_answer(
+                sample.answer
+            )
         return normalize_freeform_answer(parsed_prediction) == normalize_freeform_answer(sample.answer)
 
     def _resolve_data_dir(self, dataset_path: Path) -> Optional[Path]:
@@ -177,7 +193,11 @@ class AGIEvalEvaluator(BaseEvaluator):
             if isinstance(raw_label, list):
                 raw_label = "".join(str(item) for item in raw_label)
             letters = re.findall(r"[A-Z]", str(raw_label or "").upper())
-            answer = letters[0] if letters else ""
+            if len(letters) > 1:
+                answer = self._canonical_multi_answer("".join(letters))
+                task_format = "multi_choice"
+            else:
+                answer = letters[0] if letters else ""
         return EvaluationSample(
             sample_id=str(record.get("id") or record.get("question_id") or f"{task_name}-{index}"),
             group=task_name,
@@ -205,6 +225,10 @@ class AGIEvalEvaluator(BaseEvaluator):
         return "\n".join(parts)
 
     def _format_answer(self, sample: EvaluationSample) -> str:
-        if sample.metadata.get("format") == "mcq":
-            return f"Final Answer: {sample.answer}"
         return f"Final Answer: {sample.answer}"
+
+    def _canonical_multi_answer(self, value: str) -> str:
+        letters = re.findall(r"[A-Z]", str(value or "").upper())
+        if not letters:
+            return ""
+        return "".join(sorted(dict.fromkeys(letters)))

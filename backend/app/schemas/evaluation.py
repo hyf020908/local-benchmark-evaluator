@@ -31,6 +31,7 @@ class EvaluationRequest(BaseModel):
     temperature: float = Field(0.0, ge=0.0, le=2.0)
     timeout_seconds: int = Field(120, ge=10, le=600)
     few_shot: int = Field(0, ge=0, le=10)
+    random_seed: int = Field(1, ge=1, le=1_000_000)
 
     @field_validator("base_url", "model", "dataset_path")
     @classmethod

@@ -15,6 +15,7 @@ from app.evaluators.common.parsing import (
     format_labeled_options,
     normalize_freeform_answer,
 )
+from app.evaluators.common.sampling import choose_random_samples
 
 
 class BIGBenchHardEvaluator(BaseEvaluator):
@@ -26,7 +27,9 @@ class BIGBenchHardEvaluator(BaseEvaluator):
         tasks_dir = self._resolve_tasks_dir(dataset_path)
         return bool(tasks_dir and any(tasks_dir.glob("*.json")))
 
-    def load(self, dataset_path: Path, max_samples: int, few_shot: int) -> PreparedDataset:
+    def load(
+        self, dataset_path: Path, max_samples: int, few_shot: int, random_seed: int
+    ) -> PreparedDataset:
         tasks_dir = self._resolve_tasks_dir(dataset_path)
         if not tasks_dir:
             raise ValueError("BIG-Bench-Hard 目录格式不正确，需包含 bbh/*.json。")
@@ -35,14 +38,10 @@ class BIGBenchHardEvaluator(BaseEvaluator):
         samples: list[EvaluationSample] = []
         demonstrations: dict[str, list[EvaluationSample]] = {}
         for path in sorted(tasks_dir.glob("*.json")):
-            if len(samples) >= max_samples:
-                break
             payload = json.loads(path.read_text(encoding="utf-8"))
             task_name = path.stem
             task_samples: list[EvaluationSample] = []
             for index, example in enumerate(payload.get("examples", [])):
-                if len(samples) + len(task_samples) >= max_samples:
-                    break
                 if not isinstance(example, dict):
                     continue
                 raw_input = str(example.get("input") or "").strip()
@@ -79,7 +78,7 @@ class BIGBenchHardEvaluator(BaseEvaluator):
             dataset_key=self.key,
             dataset_name=self.label,
             dataset_path=str(dataset_path),
-            samples=samples[:max_samples],
+            samples=choose_random_samples(samples, max_samples, random_seed),
             demonstrations_by_group=demonstrations,
             metadata={"cot_prompts": cot_prompts},
         )

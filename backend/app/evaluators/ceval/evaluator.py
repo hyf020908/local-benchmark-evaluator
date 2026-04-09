@@ -7,6 +7,7 @@ from datasets import load_dataset
 from app.evaluators.base import MultipleChoiceEvaluator
 from app.evaluators.common.io import first_existing_dir, list_csv_files, normalize_stem, read_csv_rows
 from app.evaluators.common.models import EvaluationSample, PreparedDataset
+from app.evaluators.common.sampling import choose_random_samples
 
 
 class CEvalEvaluator(MultipleChoiceEvaluator):
@@ -23,7 +24,9 @@ class CEvalEvaluator(MultipleChoiceEvaluator):
             (dataset_path / "subject_mapping.json").exists()
         )
 
-    def load(self, dataset_path: Path, max_samples: int, few_shot: int) -> PreparedDataset:
+    def load(
+        self, dataset_path: Path, max_samples: int, few_shot: int, random_seed: int
+    ) -> PreparedDataset:
         dev_dir = first_existing_dir(dataset_path, ["data/dev", "dev"])
         eval_dir = first_existing_dir(dataset_path, ["data/val", "val", "data/test", "test"])
         if dev_dir and eval_dir:
@@ -48,7 +51,7 @@ class CEvalEvaluator(MultipleChoiceEvaluator):
             dataset_key=self.key,
             dataset_name=self.label,
             dataset_path=str(dataset_path),
-            samples=samples[:max_samples],
+            samples=choose_random_samples(samples, max_samples, random_seed),
             demonstrations_by_group=demonstrations,
         )
 
@@ -80,8 +83,6 @@ class CEvalEvaluator(MultipleChoiceEvaluator):
             demonstrations[subject] = self._convert_hf_split(subject, list(dataset["dev"]))
             eval_split = "test" if "test" in dataset else "val"
             samples.extend(self._convert_hf_split(subject, list(dataset[eval_split])))
-            if len(samples) >= max_samples:
-                break
 
         return demonstrations, samples
 

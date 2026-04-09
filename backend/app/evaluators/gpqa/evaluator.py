@@ -9,6 +9,7 @@ from pathlib import Path
 
 from app.evaluators.base import MultipleChoiceEvaluator
 from app.evaluators.common.models import EvaluationSample, PreparedDataset
+from app.evaluators.common.sampling import choose_random_samples
 
 
 class GPQAEvaluator(MultipleChoiceEvaluator):
@@ -25,7 +26,9 @@ class GPQAEvaluator(MultipleChoiceEvaluator):
             or any(dataset_path.glob("gpqa_*.csv"))
         )
 
-    def load(self, dataset_path: Path, max_samples: int, few_shot: int) -> PreparedDataset:
+    def load(
+        self, dataset_path: Path, max_samples: int, few_shot: int, random_seed: int
+    ) -> PreparedDataset:
         file_contents = self._load_csv_sources(dataset_path)
         if not file_contents:
             raise ValueError("GPQA 目录格式不正确，需包含 dataset.zip 或 dataset/gpqa_*.csv。")
@@ -33,19 +36,17 @@ class GPQAEvaluator(MultipleChoiceEvaluator):
         samples: list[EvaluationSample] = []
         demonstrations: dict[str, list[EvaluationSample]] = {}
         for group, content in file_contents:
-            if len(samples) >= max_samples:
-                break
             group_samples = self._convert_csv(group, content)
             if not group_samples:
                 continue
             demonstrations[group] = group_samples
-            samples.extend(group_samples[: max_samples - len(samples)])
+            samples.extend(group_samples)
 
         return PreparedDataset(
             dataset_key=self.key,
             dataset_name=self.label,
             dataset_path=str(dataset_path),
-            samples=samples[:max_samples],
+            samples=choose_random_samples(samples, max_samples, random_seed),
             demonstrations_by_group=demonstrations,
         )
 

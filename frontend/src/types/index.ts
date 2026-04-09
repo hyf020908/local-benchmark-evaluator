@@ -73,4 +73,5 @@ export interface EvaluationPayload {
   temperature: number
   timeout_seconds: number
   few_shot: number
+  random_seed: number
 }

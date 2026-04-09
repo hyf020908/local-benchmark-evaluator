@@ -5,6 +5,7 @@ from pathlib import Path
 from app.evaluators.base import MultipleChoiceEvaluator
 from app.evaluators.common.io import first_existing_dir, list_csv_files, normalize_stem, read_csv_rows
 from app.evaluators.common.models import EvaluationSample, PreparedDataset
+from app.evaluators.common.sampling import choose_random_samples
 
 
 class CMMLUEvaluator(MultipleChoiceEvaluator):
@@ -17,7 +18,9 @@ class CMMLUEvaluator(MultipleChoiceEvaluator):
         test_dir = first_existing_dir(dataset_path, ["data/test", "test"])
         return bool(dev_dir and test_dir and list_csv_files(dev_dir) and list_csv_files(test_dir))
 
-    def load(self, dataset_path: Path, max_samples: int, few_shot: int) -> PreparedDataset:
+    def load(
+        self, dataset_path: Path, max_samples: int, few_shot: int, random_seed: int
+    ) -> PreparedDataset:
         dev_dir = first_existing_dir(dataset_path, ["data/dev", "dev"])
         test_dir = first_existing_dir(dataset_path, ["data/test", "test"])
         if not dev_dir or not test_dir:
@@ -37,7 +40,7 @@ class CMMLUEvaluator(MultipleChoiceEvaluator):
             dataset_key=self.key,
             dataset_name=self.label,
             dataset_path=str(dataset_path),
-            samples=samples[:max_samples],
+            samples=choose_random_samples(samples, max_samples, random_seed),
             demonstrations_by_group=demonstrations,
         )
 

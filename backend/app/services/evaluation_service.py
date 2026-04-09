@@ -120,7 +120,10 @@ class EvaluationService:
             "logs": [],
         }
         job_store.create(job)
-        job_store.append_log(job_id, f"任务已创建，评测集={evaluator.label}，模型={request.model}")
+        job_store.append_log(
+            job_id,
+            f"任务已创建，评测集={evaluator.label}，模型={request.model}，随机种子={request.random_seed}",
+        )
         asyncio.create_task(self._run_job(job_id, request, evaluator.key))
         return job_store.get(job_id)
 
@@ -139,6 +142,7 @@ class EvaluationService:
                     Path(request.dataset_path),
                     request.max_samples,
                     request.few_shot,
+                    request.random_seed,
                 )
                 job_store.patch_progress(job_id, total=len(dataset.samples))
                 job_store.append_log(job_id, f"数据集加载完成，共 {len(dataset.samples)} 条样本。")

@@ -9,6 +9,7 @@ from datasets import load_dataset
 from app.evaluators.base import MultipleChoiceEvaluator
 from app.evaluators.common.io import first_existing_dir, load_json_records
 from app.evaluators.common.models import EvaluationSample, PreparedDataset
+from app.evaluators.common.sampling import choose_random_samples
 
 
 class MMLUProEvaluator(MultipleChoiceEvaluator):
@@ -25,7 +26,9 @@ class MMLUProEvaluator(MultipleChoiceEvaluator):
             return True
         return bool((dataset_path / "evaluate_from_local.py").exists())
 
-    def load(self, dataset_path: Path, max_samples: int, few_shot: int) -> PreparedDataset:
+    def load(
+        self, dataset_path: Path, max_samples: int, few_shot: int, random_seed: int
+    ) -> PreparedDataset:
         validation_dir = first_existing_dir(dataset_path, ["validation", "val", "data/validation"])
         test_dir = first_existing_dir(dataset_path, ["test", "data/test"])
         if validation_dir and test_dir:
@@ -48,7 +51,7 @@ class MMLUProEvaluator(MultipleChoiceEvaluator):
             dataset_key=self.key,
             dataset_name=self.label,
             dataset_path=str(dataset_path),
-            samples=samples[:max_samples],
+            samples=choose_random_samples(samples, max_samples, random_seed),
             demonstrations_by_group=demonstrations,
         )
 

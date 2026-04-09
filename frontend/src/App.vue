@@ -31,7 +31,8 @@ const form = reactive<EvaluationPayload>({
   concurrency: 2,
   temperature: 0,
   timeout_seconds: 120,
-  few_shot: 0
+  few_shot: 0,
+  random_seed: 1
 })
 
 const progressPercentage = computed(() => {
@@ -242,6 +243,9 @@ onBeforeUnmount(() => {
             </el-form-item>
             <el-form-item label="Few-shot">
               <el-input-number v-model="form.few_shot" :min="0" :max="10" />
+            </el-form-item>
+            <el-form-item label="随机种子">
+              <el-input-number v-model="form.random_seed" :min="1" :max="1000000" />
             </el-form-item>
           </div>
         </el-form>

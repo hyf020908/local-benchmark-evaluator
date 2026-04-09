@@ -14,6 +14,7 @@ from app.evaluators.common.parsing import (
     format_labeled_options,
     normalize_freeform_answer,
 )
+from app.evaluators.common.sampling import choose_random_samples
 
 
 class BIGBenchEvaluator(BaseEvaluator):
@@ -24,7 +25,9 @@ class BIGBenchEvaluator(BaseEvaluator):
     def can_handle(self, dataset_path: Path) -> bool:
         return bool(self._resolve_task_paths(dataset_path))
 
-    def load(self, dataset_path: Path, max_samples: int, few_shot: int) -> PreparedDataset:
+    def load(
+        self, dataset_path: Path, max_samples: int, few_shot: int, random_seed: int
+    ) -> PreparedDataset:
         task_paths = self._resolve_task_paths(dataset_path)
         if not task_paths:
             raise ValueError("BIG-bench 目录格式不正确，需包含 task.json 或 bigbench/benchmark_tasks 下的 JSON 任务。")
@@ -32,11 +35,9 @@ class BIGBenchEvaluator(BaseEvaluator):
         samples: list[EvaluationSample] = []
         demonstrations: dict[str, list[EvaluationSample]] = {}
         for task_path in task_paths:
-            if len(samples) >= max_samples:
-                break
             payload = json.loads(task_path.read_text(encoding="utf-8"))
             task_name = str(payload.get("name") or task_path.parent.name).strip() or task_path.parent.name
-            task_samples = self._convert_task(task_name, payload, limit=max_samples - len(samples))
+            task_samples = self._convert_task(task_name, payload)
             if not task_samples:
                 continue
             demonstrations[task_name] = task_samples
@@ -46,7 +47,7 @@ class BIGBenchEvaluator(BaseEvaluator):
             dataset_key=self.key,
             dataset_name=self.label,
             dataset_path=str(dataset_path),
-            samples=samples[:max_samples],
+            samples=choose_random_samples(samples, max_samples, random_seed),
             demonstrations_by_group=demonstrations,
         )
 
@@ -144,14 +145,12 @@ class BIGBenchEvaluator(BaseEvaluator):
             if path.is_file()
         ]
 
-    def _convert_task(self, task_name: str, payload: dict, limit: int | None = None) -> list[EvaluationSample]:
+    def _convert_task(self, task_name: str, payload: dict) -> list[EvaluationSample]:
         examples = payload.get("examples") or []
         output_regex = str(payload.get("output_regex") or "").strip()
         samples: list[EvaluationSample] = []
 
         for index, example in enumerate(examples):
-            if limit is not None and len(samples) >= limit:
-                break
             if not isinstance(example, dict):
                 continue
             question = str(example.get("input") or "").strip()

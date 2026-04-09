@@ -11,6 +11,7 @@ from app.evaluators.common.parsing import (
     extract_sequential_choices,
     extract_single_choice,
 )
+from app.evaluators.common.sampling import choose_random_samples
 
 
 class GAOKAOBenchEvaluator(BaseEvaluator):
@@ -22,7 +23,9 @@ class GAOKAOBenchEvaluator(BaseEvaluator):
         objective_dir = self._resolve_objective_dir(dataset_path)
         return bool(objective_dir and any(objective_dir.glob("*.json")))
 
-    def load(self, dataset_path: Path, max_samples: int, few_shot: int) -> PreparedDataset:
+    def load(
+        self, dataset_path: Path, max_samples: int, few_shot: int, random_seed: int
+    ) -> PreparedDataset:
         objective_dir = self._resolve_objective_dir(dataset_path)
         if not objective_dir:
             raise ValueError("GAOKAO-Bench 目录格式不正确，需包含 Data/Objective_Questions。")
@@ -31,8 +34,6 @@ class GAOKAOBenchEvaluator(BaseEvaluator):
         samples: list[EvaluationSample] = []
         demonstrations: dict[str, list[EvaluationSample]] = {}
         for path in sorted(objective_dir.glob("*.json")):
-            if len(samples) >= max_samples:
-                break
             data = json.loads(path.read_text(encoding="utf-8"))
             keyword = str(data.get("keywords") or path.stem).strip() or path.stem
             prompt_config = prompt_map.get(keyword, {})
@@ -65,13 +66,13 @@ class GAOKAOBenchEvaluator(BaseEvaluator):
                 )
             if group_samples:
                 demonstrations[keyword] = group_samples
-                samples.extend(group_samples[: max_samples - len(samples)])
+                samples.extend(group_samples)
 
         return PreparedDataset(
             dataset_key=self.key,
             dataset_name=self.label,
             dataset_path=str(dataset_path),
-            samples=samples[:max_samples],
+            samples=choose_random_samples(samples, max_samples, random_seed),
             demonstrations_by_group=demonstrations,
         )
 

@@ -5,6 +5,7 @@ from pathlib import Path
 from app.evaluators.base import MultipleChoiceEvaluator
 from app.evaluators.common.io import load_json_records
 from app.evaluators.common.models import EvaluationSample, PreparedDataset
+from app.evaluators.common.sampling import choose_random_samples
 
 
 class HellaSwagEvaluator(MultipleChoiceEvaluator):
@@ -16,7 +17,9 @@ class HellaSwagEvaluator(MultipleChoiceEvaluator):
         data_dir = self._resolve_data_dir(dataset_path)
         return bool(data_dir and (data_dir / "hellaswag_val.jsonl").is_file())
 
-    def load(self, dataset_path: Path, max_samples: int, few_shot: int) -> PreparedDataset:
+    def load(
+        self, dataset_path: Path, max_samples: int, few_shot: int, random_seed: int
+    ) -> PreparedDataset:
         data_dir = self._resolve_data_dir(dataset_path)
         if not data_dir:
             raise ValueError("HellaSwag 目录格式不正确，需包含 data/hellaswag_val.jsonl。")
@@ -26,13 +29,13 @@ class HellaSwagEvaluator(MultipleChoiceEvaluator):
             if few_shot > 0 and (data_dir / "hellaswag_train.jsonl").is_file()
             else {}
         )
-        samples = self._load_split(data_dir / "hellaswag_val.jsonl", limit=max_samples)
+        samples = self._load_split(data_dir / "hellaswag_val.jsonl")
 
         return PreparedDataset(
             dataset_key=self.key,
             dataset_name=self.label,
             dataset_path=str(dataset_path),
-            samples=samples[:max_samples],
+            samples=choose_random_samples(samples, max_samples, random_seed),
             demonstrations_by_group=demos,
         )
 
