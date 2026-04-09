@@ -5,8 +5,6 @@ from pathlib import Path
 from app.evaluators.base import BaseEvaluator
 from app.evaluators.ceval.evaluator import CEvalEvaluator
 from app.evaluators.cmmlu.evaluator import CMMLUEvaluator
-from app.evaluators.gsm8k.evaluator import GSM8KEvaluator
-from app.evaluators.mmlu.evaluator import MMLUEvaluator
 from app.evaluators.mmlu_pro.evaluator import MMLUProEvaluator
 from app.evaluators.truthfulqa.evaluator import TruthfulQAEvaluator
 
@@ -16,11 +14,9 @@ class EvaluatorRegistry:
         self._evaluators: dict[str, BaseEvaluator] = {
             evaluator.key: evaluator
             for evaluator in [
-                MMLUEvaluator(),
                 MMLUProEvaluator(),
                 CEvalEvaluator(),
                 CMMLUEvaluator(),
-                GSM8KEvaluator(),
                 TruthfulQAEvaluator(),
             ]
         }

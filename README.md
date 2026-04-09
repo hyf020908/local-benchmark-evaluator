@@ -13,12 +13,10 @@
 
 | 数据集 | 识别方式 | 目录要求 |
 | --- | --- | --- |
-| MMLU | 本地目录识别 | `dev/*.csv` 与 `test/*.csv` |
 | MMLU-Pro | 本地目录识别 | `validation/*.jsonl|json` 与 `test/*.jsonl|json`；或官方仓库根目录 |
 | C-Eval | 本地目录识别 | `data/dev/*.csv` 与 `data/val/*.csv`；或官方仓库根目录 |
 | CMMLU | 本地目录识别 | `data/dev/*.csv` 与 `data/test/*.csv` |
 | TruthfulQA | 本地目录识别 | `TruthfulQA.csv` 与 `data/mc_task.json` |
-| GSM8K | 本地目录识别 | `train.jsonl|json` 与 `test.jsonl|json` |
 
 ## 官方仓库根目录回退策略
 
@@ -31,11 +29,9 @@
 
 使用前需要先把对应数据集下载到本地，然后在前端表单里手动填写数据集绝对路径。
 
-- MMLU: `https://github.com/hendrycks/test`
 - MMLU-Pro: `https://github.com/TIGER-AI-Lab/MMLU-Pro`
 - C-Eval: `https://github.com/hkust-nlp/ceval`
 - CMMLU: `https://github.com/haonan-li/CMMLU`
-- GSM8K: `https://github.com/openai/grade-school-math`
 - TruthfulQA: `https://github.com/sylinrl/TruthfulQA`
 
 示例：
@@ -152,16 +148,6 @@ uvicorn mock_model_server:app --host 127.0.0.1 --port 8001
 
 ## 数据集目录示例
 
-### MMLU
-
-```text
-/absolute/path/to/mmlu/
-├── dev/
-│   └── abstract_algebra_dev.csv
-└── test/
-    └── abstract_algebra_test.csv
-```
-
 ### C-Eval
 
 ```text
@@ -192,14 +178,6 @@ uvicorn mock_model_server:app --host 127.0.0.1 --port 8001
 │   └── math.jsonl
 └── test/
     └── math.jsonl
-```
-
-### GSM8K
-
-```text
-/absolute/path/to/gsm8k/
-├── train.jsonl
-└── test.jsonl
 ```
 
 ### TruthfulQA
