@@ -7,6 +7,11 @@ const api = axios.create({
   timeout: 30000
 })
 
+const pollingApi = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api',
+  timeout: 0
+})
+
 export async function fetchDatasets(): Promise<DatasetInfo[]> {
   const response = await api.get<{ items: DatasetInfo[] }>('/datasets')
   return response.data.items
@@ -18,7 +23,7 @@ export async function startEvaluation(payload: EvaluationPayload): Promise<Evalu
 }
 
 export async function fetchEvaluation(jobId: string): Promise<EvaluationJob> {
-  const response = await api.get<EvaluationJob>(`/evaluations/${jobId}`)
+  const response = await pollingApi.get<EvaluationJob>(`/evaluations/${jobId}`)
   return response.data
 }
 

@@ -15,7 +15,11 @@ const history = ref<EvaluationJob[]>([])
 const currentJob = ref<EvaluationJob | null>(null)
 const loading = ref(false)
 const polling = ref<number | null>(null)
+const pollingInFlight = ref(false)
+const pollingFailures = ref(0)
 const activeTab = ref('samples')
+const POLL_INTERVAL_MS = 1500
+const POLL_RETRY_MS = 4000
 
 const form = reactive<EvaluationPayload>({
   base_url: 'http://127.0.0.1:8001',
@@ -58,9 +62,11 @@ async function loadInitialData() {
 
 function stopPolling() {
   if (polling.value !== null) {
-    window.clearInterval(polling.value)
+    window.clearTimeout(polling.value)
     polling.value = null
   }
+  pollingInFlight.value = false
+  pollingFailures.value = 0
 }
 
 async function refreshCurrentJob() {
@@ -73,16 +79,41 @@ async function refreshCurrentJob() {
   }
 }
 
+function schedulePolling(delay = POLL_INTERVAL_MS) {
+  if (polling.value !== null) {
+    window.clearTimeout(polling.value)
+  }
+  polling.value = window.setTimeout(runPollingCycle, delay)
+}
+
+async function runPollingCycle() {
+  if (!currentJob.value || pollingInFlight.value) {
+    schedulePolling()
+    return
+  }
+
+  pollingInFlight.value = true
+  try {
+    await refreshCurrentJob()
+    pollingFailures.value = 0
+    if (currentJob.value?.status === 'running' || currentJob.value?.status === 'queued') {
+      schedulePolling()
+    }
+  } catch (error: any) {
+    pollingFailures.value += 1
+    if (pollingFailures.value === 1 || pollingFailures.value % 5 === 0) {
+      const detail = error?.response?.data?.detail || error?.message || '未知错误'
+      ElMessage.warning(`轮询评测状态失败：${detail}`)
+    }
+    schedulePolling(POLL_RETRY_MS)
+  } finally {
+    pollingInFlight.value = false
+  }
+}
+
 function startPolling() {
   stopPolling()
-  polling.value = window.setInterval(async () => {
-    try {
-      await refreshCurrentJob()
-    } catch (error) {
-      stopPolling()
-      ElMessage.error('轮询评测状态失败，请稍后重试。')
-    }
-  }, 1500)
+  schedulePolling()
 }
 
 async function submitEvaluation() {

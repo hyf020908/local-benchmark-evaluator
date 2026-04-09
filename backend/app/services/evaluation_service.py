@@ -140,138 +140,144 @@ class EvaluationService:
         return job_store.get(job_id)
 
     async def _run_job(self, job_id: str, request: EvaluationRequest, dataset_key: str) -> None:
-        evaluator = registry.get(dataset_key)
-        started_at = time.perf_counter()
-        job_store.update(job_id, status="running", started_at=utc_now())
-        job_store.append_log(job_id, f"开始加载数据集：{request.dataset_path}")
-
         try:
-            dataset = evaluator.load(
-                Path(request.dataset_path),
-                max_samples=request.max_samples,
-                few_shot=request.few_shot,
-            )
-            job_store.patch_progress(job_id, total=len(dataset.samples))
-            job_store.append_log(job_id, f"数据集加载完成，共 {len(dataset.samples)} 条样本。")
-        except Exception as exc:
-            await self._mark_failed(job_id, f"数据集加载失败：{exc}")
-            return
+            evaluator = registry.get(dataset_key)
+            started_at = time.perf_counter()
+            job_store.update(job_id, status="running", started_at=utc_now())
+            job_store.append_log(job_id, f"开始加载数据集：{request.dataset_path}")
 
-        client = OpenAICompatibleClient(
-            base_url=request.base_url,
-            api_key=request.api_key,
-            model=request.model,
-            timeout_seconds=request.timeout_seconds,
-        )
-
-        semaphore = asyncio.Semaphore(request.concurrency)
-
-        async def worker(sample_index: int, sample) -> None:
-            async with semaphore:
-                sample_started = time.perf_counter()
-                prompt = evaluator.build_prompt(sample, dataset, request.few_shot)
-                try:
-                    raw_output = await client.complete(prompt, temperature=request.temperature)
-                    parsed_answer = evaluator.parse_prediction(raw_output, sample)
-                    is_correct = evaluator.is_correct(sample, parsed_answer)
-                    error_reason = None if parsed_answer else "模型输出中未成功解析出答案。"
-                    result_status = "ok"
-                    success_delta = 1
-                    failed_delta = 0
-                    parsable_delta = 1 if parsed_answer else 0
-                    correct_delta = 1 if is_correct else 0
-                except ModelClientError as exc:
-                    raw_output = ""
-                    parsed_answer = None
-                    is_correct = False
-                    error_reason = str(exc)
-                    result_status = "error"
-                    success_delta = 0
-                    failed_delta = 1
-                    parsable_delta = 0
-                    correct_delta = 0
-                except Exception as exc:
-                    raw_output = ""
-                    parsed_answer = None
-                    is_correct = False
-                    error_reason = f"评测异常：{exc}"
-                    result_status = "error"
-                    success_delta = 0
-                    failed_delta = 1
-                    parsable_delta = 0
-                    correct_delta = 0
-
-                elapsed = round(time.perf_counter() - sample_started, 4)
-                result = {
-                    "sample_id": sample.sample_id,
-                    "group": sample.group,
-                    "question_summary": evaluator.summarize_question(sample),
-                    "question": sample.question,
-                    "raw_output": raw_output,
-                    "parsed_answer": parsed_answer,
-                    "reference_answer": sample.answer,
-                    "is_correct": is_correct,
-                    "status": result_status,
-                    "error_reason": error_reason,
-                    "elapsed_seconds": elapsed,
-                    "options": sample.options,
-                }
-                job_store.add_sample_result(job_id, result)
-                snapshot = job_store.get(job_id)
-                progress = snapshot["progress"]
-                job_store.patch_progress(
-                    job_id,
-                    completed=progress["completed"] + 1,
-                    success=progress["success"] + success_delta,
-                    failed=progress["failed"] + failed_delta,
-                    correct=progress["correct"] + correct_delta,
-                    parsable=progress["parsable"] + parsable_delta,
+            try:
+                # Dataset loading can involve local archive parsing or Hugging Face downloads.
+                # Run it off the event loop so status polling remains responsive.
+                dataset = await asyncio.to_thread(
+                    evaluator.load,
+                    Path(request.dataset_path),
+                    request.max_samples,
+                    request.few_shot,
                 )
-                if result_status == "error":
-                    job_store.append_log(
-                        job_id,
-                        f"[{sample.sample_id}] 调用失败：{error_reason}",
-                    )
-                else:
-                    verdict = "正确" if is_correct else "错误"
-                    job_store.append_log(
-                        job_id,
-                        f"[{sample.sample_id}] 完成，解析答案={parsed_answer or 'N/A'}，判定={verdict}",
-                    )
+                job_store.patch_progress(job_id, total=len(dataset.samples))
+                job_store.append_log(job_id, f"数据集加载完成，共 {len(dataset.samples)} 条样本。")
+            except Exception as exc:
+                await self._mark_failed(job_id, f"数据集加载失败：{exc}")
+                return
 
-        await asyncio.gather(*(worker(idx, sample) for idx, sample in enumerate(dataset.samples)))
+            client = OpenAICompatibleClient(
+                base_url=request.base_url,
+                api_key=request.api_key,
+                model=request.model,
+                timeout_seconds=request.timeout_seconds,
+            )
 
-        snapshot = job_store.get(job_id)
-        progress = snapshot["progress"]
-        total_elapsed = round(time.perf_counter() - started_at, 4)
-        total = max(progress["total"], 1)
-        metrics = {
-            "total_questions": progress["total"],
-            "completed_questions": progress["completed"],
-            "success_questions": progress["success"],
-            "failed_questions": progress["failed"],
-            "parsable_questions": progress["parsable"],
-            "correct_questions": progress["correct"],
-            "accuracy": round(progress["correct"] / total, 4),
-            "avg_seconds_per_question": round(total_elapsed / total, 4),
-            "total_elapsed_seconds": total_elapsed,
-        }
-        output_file = self._persist_job(
-            {
-                **snapshot,
-                "status": "completed",
-                "finished_at": utc_now(),
-                "metrics": metrics,
+            semaphore = asyncio.Semaphore(request.concurrency)
+
+            async def worker(sample_index: int, sample) -> None:
+                async with semaphore:
+                    sample_started = time.perf_counter()
+                    prompt = evaluator.build_prompt(sample, dataset, request.few_shot)
+                    try:
+                        raw_output = await client.complete(prompt, temperature=request.temperature)
+                        parsed_answer = evaluator.parse_prediction(raw_output, sample)
+                        is_correct = evaluator.is_correct(sample, parsed_answer)
+                        error_reason = None if parsed_answer else "模型输出中未成功解析出答案。"
+                        result_status = "ok"
+                        success_delta = 1
+                        failed_delta = 0
+                        parsable_delta = 1 if parsed_answer else 0
+                        correct_delta = 1 if is_correct else 0
+                    except ModelClientError as exc:
+                        raw_output = ""
+                        parsed_answer = None
+                        is_correct = False
+                        error_reason = str(exc)
+                        result_status = "error"
+                        success_delta = 0
+                        failed_delta = 1
+                        parsable_delta = 0
+                        correct_delta = 0
+                    except Exception as exc:
+                        raw_output = ""
+                        parsed_answer = None
+                        is_correct = False
+                        error_reason = f"评测异常：{exc}"
+                        result_status = "error"
+                        success_delta = 0
+                        failed_delta = 1
+                        parsable_delta = 0
+                        correct_delta = 0
+
+                    elapsed = round(time.perf_counter() - sample_started, 4)
+                    result = {
+                        "sample_id": sample.sample_id,
+                        "group": sample.group,
+                        "question_summary": evaluator.summarize_question(sample),
+                        "question": sample.question,
+                        "raw_output": raw_output,
+                        "parsed_answer": parsed_answer,
+                        "reference_answer": sample.answer,
+                        "is_correct": is_correct,
+                        "status": result_status,
+                        "error_reason": error_reason,
+                        "elapsed_seconds": elapsed,
+                        "options": sample.options,
+                    }
+                    job_store.add_sample_result(job_id, result)
+                    snapshot = job_store.get(job_id)
+                    progress = snapshot["progress"]
+                    job_store.patch_progress(
+                        job_id,
+                        completed=progress["completed"] + 1,
+                        success=progress["success"] + success_delta,
+                        failed=progress["failed"] + failed_delta,
+                        correct=progress["correct"] + correct_delta,
+                        parsable=progress["parsable"] + parsable_delta,
+                    )
+                    if result_status == "error":
+                        job_store.append_log(
+                            job_id,
+                            f"[{sample.sample_id}] 调用失败：{error_reason}",
+                        )
+                    else:
+                        verdict = "正确" if is_correct else "错误"
+                        job_store.append_log(
+                            job_id,
+                            f"[{sample.sample_id}] 完成，解析答案={parsed_answer or 'N/A'}，判定={verdict}",
+                        )
+
+            await asyncio.gather(*(worker(idx, sample) for idx, sample in enumerate(dataset.samples)))
+
+            snapshot = job_store.get(job_id)
+            progress = snapshot["progress"]
+            total_elapsed = round(time.perf_counter() - started_at, 4)
+            total = max(progress["total"], 1)
+            metrics = {
+                "total_questions": progress["total"],
+                "completed_questions": progress["completed"],
+                "success_questions": progress["success"],
+                "failed_questions": progress["failed"],
+                "parsable_questions": progress["parsable"],
+                "correct_questions": progress["correct"],
+                "accuracy": round(progress["correct"] / total, 4),
+                "avg_seconds_per_question": round(total_elapsed / total, 4),
+                "total_elapsed_seconds": total_elapsed,
             }
-        )
-        job_store.update(
-            job_id,
-            status="completed",
-            finished_at=utc_now(),
-            metrics=metrics,
-            output_file=str(output_file),
-        )
-        job_store.append_log(job_id, f"评测完成，结果已保存到 {output_file}")
+            output_file = self._persist_job(
+                {
+                    **snapshot,
+                    "status": "completed",
+                    "finished_at": utc_now(),
+                    "metrics": metrics,
+                }
+            )
+            job_store.update(
+                job_id,
+                status="completed",
+                finished_at=utc_now(),
+                metrics=metrics,
+                output_file=str(output_file),
+            )
+            job_store.append_log(job_id, f"评测完成，结果已保存到 {output_file}")
+        except Exception as exc:
+            await self._mark_failed(job_id, f"后台任务异常终止：{exc}")
 
     async def _mark_failed(self, job_id: str, message: str) -> None:
         output_file = self._persist_job(
