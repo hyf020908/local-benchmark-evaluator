@@ -172,7 +172,8 @@ onBeforeUnmount(() => {
         <div class="eyebrow">Local Multi-Benchmark LLM Evaluation</div>
         <h1>Local Benchmark Evaluator</h1>
         <p class="hero-copy">
-          面向 OpenAI-compatible 模型接口的本地评测系统，统一管理 MMLU-Pro、C-Eval、CMMLU、TruthfulQA
+          面向 OpenAI-compatible 模型接口的本地评测系统，统一管理 MMLU-Pro、C-Eval、CMMLU、
+          TruthfulQA、AGIEval、GPQA、HellaSwag、GAOKAO-Bench、BIG-bench、BIG-Bench-Hard
           等评测集，支持绝对路径读取、后台任务、日志追踪与结果落盘。
         </p>
       </div>

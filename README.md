@@ -17,6 +17,12 @@
 | C-Eval | 本地目录识别 | `data/dev/*.csv` 与 `data/val/*.csv`；或官方仓库根目录 |
 | CMMLU | 本地目录识别 | `data/dev/*.csv` 与 `data/test/*.csv` |
 | TruthfulQA | 本地目录识别 | `TruthfulQA.csv` 与 `data/mc_task.json` |
+| AGIEval | 本地目录识别 | `data/v1_1/*.jsonl`、`data/v1/*.jsonl` 或对应数据目录 |
+| GPQA | 本地目录识别 | 官方仓库根目录下 `dataset.zip`；或 `dataset/gpqa_*.csv` |
+| HellaSwag | 本地目录识别 | `data/hellaswag_train.jsonl` 与 `data/hellaswag_val.jsonl` |
+| GAOKAO-Bench | 本地目录识别 | `Data/Objective_Questions/*.json` 与 `Bench/Obj_Prompt.json` |
+| BIG-bench | 本地目录识别 | `task.json`、`benchmark_tasks/**/task.json` 或官方仓库根目录 |
+| BIG-Bench-Hard | 本地目录识别 | `bbh/*.json`；可选 `cot-prompts/*.txt` |
 
 ## 官方仓库根目录回退策略
 
@@ -33,6 +39,12 @@
 - C-Eval: `https://github.com/hkust-nlp/ceval`
 - CMMLU: `https://github.com/haonan-li/CMMLU`
 - TruthfulQA: `https://github.com/sylinrl/TruthfulQA`
+- AGIEval: `https://github.com/ruixiangcui/AGIEval`
+- GPQA: `https://github.com/idavidrein/gpqa`
+- HellaSwag: `https://github.com/rowanz/hellaswag`
+- GAOKAO-Bench: `https://github.com/OpenLMLab/GAOKAO-Bench`
+- BIG-bench: `https://github.com/google/BIG-bench`
+- BIG-Bench-Hard: `https://github.com/suzgunmirac/BIG-Bench-Hard`
 
 示例：
 
@@ -42,6 +54,9 @@ git clone https://github.com/hkust-nlp/ceval.git /path/to/ceval
 ```
 
 下载完成后，请确认你填写的目录能够满足下文的数据集目录要求。若仓库根目录与本项目要求不完全一致，请先自行整理到对应结构后再填写路径。
+
+- `GAOKAO-Bench` 当前按客观题目录 `Data/Objective_Questions` 自动评分。
+- `BIG-bench` 当前按 `task.json` 定义的 JSON 任务自动加载。
 
 ## 目录结构
 
@@ -189,6 +204,76 @@ uvicorn mock_model_server:app --host 127.0.0.1 --port 8001
     └── mc_task.json
 ```
 
+### AGIEval
+
+```text
+/absolute/path/to/AGIEval/
+└── data/
+    ├── few_shot_prompts.csv
+    └── v1_1/
+        ├── logiqa-en.jsonl
+        └── sat-math.jsonl
+```
+
+### GPQA
+
+```text
+/absolute/path/to/gpqa/
+├── dataset.zip
+└── README.md
+```
+
+或：
+
+```text
+/absolute/path/to/gpqa/
+└── dataset/
+    ├── gpqa_main.csv
+    └── gpqa_diamond.csv
+```
+
+### HellaSwag
+
+```text
+/absolute/path/to/hellaswag/
+└── data/
+    ├── hellaswag_train.jsonl
+    └── hellaswag_val.jsonl
+```
+
+### GAOKAO-Bench
+
+```text
+/absolute/path/to/GAOKAO-Bench/
+├── Bench/
+│   └── Obj_Prompt.json
+└── Data/
+    └── Objective_Questions/
+        ├── 2010-2022_Physics_MCQs.json
+        └── 2010-2022_History_MCQs.json
+```
+
+### BIG-bench
+
+```text
+/absolute/path/to/BIG-bench/
+└── bigbench/
+    └── benchmark_tasks/
+        └── date_understanding/
+            └── task.json
+```
+
+### BIG-Bench-Hard
+
+```text
+/absolute/path/to/BIG-Bench-Hard/
+├── bbh/
+│   ├── boolean_expressions.json
+│   └── date_understanding.json
+└── cot-prompts/
+    └── date_understanding.txt
+```
+
 ## 结果文件
 
 每次任务在 `outputs/` 下生成一个 `{job_id}.json` 文件，包含以下字段：
@@ -229,9 +314,9 @@ uvicorn mock_model_server:app --host 127.0.0.1 --port 8001
 
 ## 扩展点
 
-新增评测集时，需要完成以下工作：
+扩展评测集时，需要完成以下工作：
 
-1. 在 `backend/app/evaluators/` 下新增 evaluator 模块。
+1. 在 `backend/app/evaluators/` 下创建 evaluator 模块。
 2. 继承 `BaseEvaluator`、`MultipleChoiceEvaluator` 或 `NumericAnswerEvaluator`。
 3. 实现 `can_handle`、`load`、`build_prompt`、`parse_prediction`、`is_correct`。
 4. 在 `backend/app/evaluators/registry.py` 中注册 evaluator。

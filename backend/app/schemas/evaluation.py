@@ -5,7 +5,19 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator
 
 
-DatasetType = Literal["auto", "mmlu_pro", "ceval", "cmmlu", "truthfulqa"]
+DatasetType = Literal[
+    "auto",
+    "mmlu_pro",
+    "ceval",
+    "cmmlu",
+    "truthfulqa",
+    "agieval",
+    "gpqa",
+    "hellaswag",
+    "gaokao_bench",
+    "big_bench",
+    "big_bench_hard",
+]
 
 
 class EvaluationRequest(BaseModel):

@@ -2,9 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from app.evaluators.agieval.evaluator import AGIEvalEvaluator
 from app.evaluators.base import BaseEvaluator
+from app.evaluators.big_bench.evaluator import BIGBenchEvaluator
+from app.evaluators.big_bench_hard.evaluator import BIGBenchHardEvaluator
 from app.evaluators.ceval.evaluator import CEvalEvaluator
 from app.evaluators.cmmlu.evaluator import CMMLUEvaluator
+from app.evaluators.gaokao_bench.evaluator import GAOKAOBenchEvaluator
+from app.evaluators.gpqa.evaluator import GPQAEvaluator
+from app.evaluators.hellaswag.evaluator import HellaSwagEvaluator
 from app.evaluators.mmlu_pro.evaluator import MMLUProEvaluator
 from app.evaluators.truthfulqa.evaluator import TruthfulQAEvaluator
 
@@ -18,6 +24,12 @@ class EvaluatorRegistry:
                 CEvalEvaluator(),
                 CMMLUEvaluator(),
                 TruthfulQAEvaluator(),
+                AGIEvalEvaluator(),
+                GPQAEvaluator(),
+                HellaSwagEvaluator(),
+                GAOKAOBenchEvaluator(),
+                BIGBenchEvaluator(),
+                BIGBenchHardEvaluator(),
             ]
         }
 
