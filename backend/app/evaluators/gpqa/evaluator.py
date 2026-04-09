@@ -33,11 +33,13 @@ class GPQAEvaluator(MultipleChoiceEvaluator):
         samples: list[EvaluationSample] = []
         demonstrations: dict[str, list[EvaluationSample]] = {}
         for group, content in file_contents:
+            if len(samples) >= max_samples:
+                break
             group_samples = self._convert_csv(group, content)
             if not group_samples:
                 continue
             demonstrations[group] = group_samples
-            samples.extend(group_samples)
+            samples.extend(group_samples[: max_samples - len(samples)])
 
         return PreparedDataset(
             dataset_key=self.key,

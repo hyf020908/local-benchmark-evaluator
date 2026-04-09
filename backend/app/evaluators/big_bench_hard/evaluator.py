@@ -7,9 +7,12 @@ from typing import Optional
 from app.evaluators.base import BaseEvaluator
 from app.evaluators.common.models import EvaluationSample, PreparedDataset
 from app.evaluators.common.parsing import (
+    build_choice_labels,
     extract_embedded_options,
     extract_final_answer_text,
+    extract_labeled_choice,
     extract_single_choice,
+    format_labeled_options,
     normalize_freeform_answer,
 )
 
@@ -32,10 +35,14 @@ class BIGBenchHardEvaluator(BaseEvaluator):
         samples: list[EvaluationSample] = []
         demonstrations: dict[str, list[EvaluationSample]] = {}
         for path in sorted(tasks_dir.glob("*.json")):
+            if len(samples) >= max_samples:
+                break
             payload = json.loads(path.read_text(encoding="utf-8"))
             task_name = path.stem
             task_samples: list[EvaluationSample] = []
             for index, example in enumerate(payload.get("examples", [])):
+                if len(samples) + len(task_samples) >= max_samples:
+                    break
                 if not isinstance(example, dict):
                     continue
                 raw_input = str(example.get("input") or "").strip()
@@ -46,6 +53,7 @@ class BIGBenchHardEvaluator(BaseEvaluator):
                 question, options = extract_embedded_options(raw_input)
                 task_format = "choice" if options and target.startswith("(") and target.endswith(")") else "text"
                 answer = target[1:-1].strip().upper() if task_format == "choice" else target
+                choice_labels = build_choice_labels(len(options), prefer_letters=True) if options else []
                 task_samples.append(
                     EvaluationSample(
                         sample_id=f"{task_name}-{index}",
@@ -59,6 +67,7 @@ class BIGBenchHardEvaluator(BaseEvaluator):
                             "task_name": task_name,
                             "raw_input": raw_input,
                             "cot_prompt": cot_prompts.get(task_name, ""),
+                            "choice_labels": choice_labels,
                         },
                     )
                 )
@@ -122,7 +131,10 @@ class BIGBenchHardEvaluator(BaseEvaluator):
 
     def parse_prediction(self, raw_output: str, sample: EvaluationSample) -> Optional[str]:
         if sample.metadata.get("format") == "choice":
-            return extract_single_choice(raw_output, len(sample.options))
+            choice_labels = list(sample.metadata.get("choice_labels") or [])
+            if all(len(label) == 1 and label.isalpha() for label in choice_labels):
+                return extract_single_choice(raw_output, len(sample.options))
+            return extract_labeled_choice(raw_output, choice_labels, sample.options)
         return extract_final_answer_text(raw_output)
 
     def is_correct(self, sample: EvaluationSample, parsed_prediction: Optional[str]) -> bool:
@@ -154,5 +166,6 @@ class BIGBenchHardEvaluator(BaseEvaluator):
         return {}
 
     def _format_choice_question(self, sample: EvaluationSample) -> str:
-        option_lines = [f"{chr(65 + index)}. {option}" for index, option in enumerate(sample.options)]
+        choice_labels = list(sample.metadata.get("choice_labels") or build_choice_labels(len(sample.options), prefer_letters=True))
+        option_lines = format_labeled_options(sample.options, choice_labels)
         return "\n".join([f"Question:\n{sample.question}", "Options:", *option_lines])

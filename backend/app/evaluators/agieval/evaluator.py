@@ -34,7 +34,9 @@ class AGIEvalEvaluator(BaseEvaluator):
         demonstrations = self._load_few_shot_prompts(dataset_path, data_dir)
         samples: list[EvaluationSample] = []
         for path in sorted(data_dir.glob("*.jsonl")):
-            samples.extend(self._load_records(path))
+            if len(samples) >= max_samples:
+                break
+            samples.extend(self._load_records(path)[: max_samples - len(samples)])
 
         return PreparedDataset(
             dataset_key=self.key,
@@ -137,6 +139,8 @@ class AGIEvalEvaluator(BaseEvaluator):
                     row_index,
                     source_file=prompt_file.name,
                 )
+                if not sample.answer:
+                    continue
                 sample.explanation = explanation or sample.explanation
                 task_samples.append(sample)
             if task_samples:
@@ -146,11 +150,14 @@ class AGIEvalEvaluator(BaseEvaluator):
     def _load_records(self, path: Path) -> list[EvaluationSample]:
         records = load_json_records(path)
         task_name = path.stem
-        return [
-            self._convert_record(task_name, record, index, source_file=path.name)
-            for index, record in enumerate(records)
-            if isinstance(record, dict)
-        ]
+        samples: list[EvaluationSample] = []
+        for index, record in enumerate(records):
+            if not isinstance(record, dict):
+                continue
+            sample = self._convert_record(task_name, record, index, source_file=path.name)
+            if sample.answer:
+                samples.append(sample)
+        return samples
 
     def _convert_record(
         self,

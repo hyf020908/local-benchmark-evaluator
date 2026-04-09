@@ -16,6 +16,16 @@ def strip_option_prefix(text: str) -> str:
     return re.sub(r"^\s*[\(\[]?[A-Z][\)\]]?[\.、:：]?\s*", "", cleaned)
 
 
+def build_choice_labels(option_count: int, prefer_letters: bool = True) -> list[str]:
+    if prefer_letters and option_count <= len(LETTERS):
+        return list(LETTERS[:option_count])
+    return [str(index) for index in range(1, option_count + 1)]
+
+
+def format_labeled_options(options: list[str], labels: list[str]) -> list[str]:
+    return [f"{label}. {option}" for label, option in zip(labels, options)]
+
+
 def normalize_freeform_answer(value: str) -> str:
     text = str(value or "").strip()
     if not text:
@@ -70,6 +80,38 @@ def extract_single_choice(raw_output: str, option_count: int) -> Optional[str]:
     matches = re.findall(rf"\b([{allowed}])\b", raw_output.upper())
     if matches:
         return matches[-1].upper()
+    return None
+
+
+def extract_labeled_choice(
+    raw_output: str,
+    labels: list[str],
+    options: list[str],
+) -> Optional[str]:
+    candidate_texts: list[str] = []
+    final_text = extract_final_answer_text(raw_output)
+    if final_text:
+        candidate_texts.append(final_text)
+
+    lines = [line.strip() for line in raw_output.splitlines() if line.strip()]
+    candidate_texts.extend(reversed(lines[-5:]))
+    for candidate in candidate_texts:
+        resolved = _resolve_choice_candidate(candidate, labels, options)
+        if resolved:
+            return resolved
+
+    label_pattern = "|".join(re.escape(label) for label in sorted(labels, key=len, reverse=True))
+    patterns = [
+        rf"Final Answer\s*[:：]?\s*\(?({label_pattern})\)?",
+        rf"答案\s*[:：]?\s*\(?({label_pattern})\)?",
+        rf"the answer is\s*\(?({label_pattern})\)?",
+        rf"so the answer is\s*\(?({label_pattern})\)?",
+    ]
+    for pattern in patterns:
+        matches = re.findall(pattern, raw_output, flags=re.IGNORECASE)
+        if matches:
+            return _match_label(matches[-1], labels)
+
     return None
 
 
@@ -143,3 +185,32 @@ def _canonical_choice_set(letters: list[str]) -> str:
             ordered.append(letter)
             seen.add(letter)
     return "".join(sorted(ordered))
+
+
+def _resolve_choice_candidate(
+    candidate: str,
+    labels: list[str],
+    options: list[str],
+) -> Optional[str]:
+    normalized = normalize_freeform_answer(candidate)
+    if not normalized:
+        return None
+
+    stripped = re.sub(r"^(final answer|answer|option|choice)\s*[:：]?\s*", "", normalized).strip()
+    stripped = stripped.strip("()[] ")
+    matched_label = _match_label(stripped, labels)
+    if matched_label:
+        return matched_label
+
+    for label, option in zip(labels, options):
+        if stripped == normalize_freeform_answer(option):
+            return label
+    return None
+
+
+def _match_label(candidate: str, labels: list[str]) -> Optional[str]:
+    lowered = candidate.lower()
+    for label in labels:
+        if lowered == label.lower():
+            return label
+    return None

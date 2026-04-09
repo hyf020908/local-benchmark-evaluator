@@ -8,9 +8,10 @@ from typing import Optional
 from app.evaluators.base import BaseEvaluator
 from app.evaluators.common.models import EvaluationSample, PreparedDataset
 from app.evaluators.common.parsing import (
-    LETTERS,
+    build_choice_labels,
+    extract_labeled_choice,
     extract_final_answer_text,
-    extract_single_choice,
+    format_labeled_options,
     normalize_freeform_answer,
 )
 
@@ -31,9 +32,11 @@ class BIGBenchEvaluator(BaseEvaluator):
         samples: list[EvaluationSample] = []
         demonstrations: dict[str, list[EvaluationSample]] = {}
         for task_path in task_paths:
+            if len(samples) >= max_samples:
+                break
             payload = json.loads(task_path.read_text(encoding="utf-8"))
             task_name = str(payload.get("name") or task_path.parent.name).strip() or task_path.parent.name
-            task_samples = self._convert_task(task_name, payload)
+            task_samples = self._convert_task(task_name, payload, limit=max_samples - len(samples))
             if not task_samples:
                 continue
             demonstrations[task_name] = task_samples
@@ -59,10 +62,11 @@ class BIGBenchEvaluator(BaseEvaluator):
         ][:few_shot]
 
         if task_format == "choice":
+            label_style = str(sample.metadata.get("label_style") or "number")
             parts = [
                 (
                     f"You are evaluating the BIG-bench task `{task_name}`. "
-                    "Choose the best option and end with `Final Answer: X`."
+                    f"Choose the best option and end with `Final Answer: {'X' if label_style == 'letter' else 'number'}`."
                 )
             ]
             for demo in demos:
@@ -87,7 +91,11 @@ class BIGBenchEvaluator(BaseEvaluator):
 
     def parse_prediction(self, raw_output: str, sample: EvaluationSample) -> Optional[str]:
         if sample.metadata.get("format") == "choice":
-            return extract_single_choice(raw_output, len(sample.options))
+            return extract_labeled_choice(
+                raw_output,
+                list(sample.metadata.get("choice_labels") or []),
+                sample.options,
+            )
 
         regex = str(sample.metadata.get("output_regex") or "").strip()
         if regex:
@@ -106,7 +114,7 @@ class BIGBenchEvaluator(BaseEvaluator):
             return False
         if sample.metadata.get("format") == "choice":
             accepted_letters = sample.metadata.get("accepted_letters") or [sample.answer]
-            return parsed_prediction.upper() in accepted_letters
+            return parsed_prediction in accepted_letters
 
         accepted_answers = sample.metadata.get("accepted_answers") or [sample.answer]
         normalized_prediction = normalize_freeform_answer(parsed_prediction)
@@ -136,12 +144,14 @@ class BIGBenchEvaluator(BaseEvaluator):
             if path.is_file()
         ]
 
-    def _convert_task(self, task_name: str, payload: dict) -> list[EvaluationSample]:
+    def _convert_task(self, task_name: str, payload: dict, limit: int | None = None) -> list[EvaluationSample]:
         examples = payload.get("examples") or []
         output_regex = str(payload.get("output_regex") or "").strip()
         samples: list[EvaluationSample] = []
 
         for index, example in enumerate(examples):
+            if limit is not None and len(samples) >= limit:
+                break
             if not isinstance(example, dict):
                 continue
             question = str(example.get("input") or "").strip()
@@ -152,13 +162,14 @@ class BIGBenchEvaluator(BaseEvaluator):
                 options = [str(option).strip() for option in example["target_scores"].keys()]
                 if not options:
                     continue
+                choice_labels = build_choice_labels(len(options), prefer_letters=False)
                 score_values = [
                     float(score) if isinstance(score, (int, float)) else float(str(score))
                     for score in example["target_scores"].values()
                 ]
                 max_score = max(score_values)
                 accepted_letters = [
-                    LETTERS[position]
+                    choice_labels[position]
                     for position, score in enumerate(score_values)
                     if score == max_score
                 ]
@@ -169,11 +180,13 @@ class BIGBenchEvaluator(BaseEvaluator):
                         question=question,
                         options=options,
                         answer=accepted_letters[0],
-                        answer_index=ord(accepted_letters[0]) - 65,
+                        answer_index=choice_labels.index(accepted_letters[0]),
                         metadata={
                             "format": "choice",
                             "task_name": task_name,
                             "accepted_letters": accepted_letters,
+                            "choice_labels": choice_labels,
+                            "label_style": "number",
                             "preferred_score": payload.get("preferred_score"),
                         },
                     )
@@ -207,5 +220,6 @@ class BIGBenchEvaluator(BaseEvaluator):
         return samples
 
     def _format_choice_question(self, sample: EvaluationSample) -> str:
-        option_lines = [f"{LETTERS[index]}. {option}" for index, option in enumerate(sample.options)]
+        choice_labels = list(sample.metadata.get("choice_labels") or build_choice_labels(len(sample.options), prefer_letters=False))
+        option_lines = format_labeled_options(sample.options, choice_labels)
         return "\n".join([f"Question:\n{sample.question}", "Options:", *option_lines])

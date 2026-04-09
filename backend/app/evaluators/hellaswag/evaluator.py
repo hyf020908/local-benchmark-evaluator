@@ -21,8 +21,12 @@ class HellaSwagEvaluator(MultipleChoiceEvaluator):
         if not data_dir:
             raise ValueError("HellaSwag 目录格式不正确，需包含 data/hellaswag_val.jsonl。")
 
-        demos = self._load_split(data_dir / "hellaswag_train.jsonl")
-        samples = self._load_split(data_dir / "hellaswag_val.jsonl")
+        demos = (
+            self._load_split(data_dir / "hellaswag_train.jsonl")
+            if few_shot > 0 and (data_dir / "hellaswag_train.jsonl").is_file()
+            else {}
+        )
+        samples = self._load_split(data_dir / "hellaswag_val.jsonl", limit=max_samples)
 
         return PreparedDataset(
             dataset_key=self.key,
@@ -55,10 +59,16 @@ class HellaSwagEvaluator(MultipleChoiceEvaluator):
             return dataset_path
         return None
 
-    def _load_split(self, path: Path) -> dict[str, list[EvaluationSample]] | list[EvaluationSample]:
+    def _load_split(
+        self,
+        path: Path,
+        limit: int | None = None,
+    ) -> dict[str, list[EvaluationSample]] | list[EvaluationSample]:
         records = load_json_records(path)
         samples: list[EvaluationSample] = []
         for record in records:
+            if limit is not None and len(samples) >= limit:
+                break
             if not isinstance(record, dict):
                 continue
             label = record.get("label")

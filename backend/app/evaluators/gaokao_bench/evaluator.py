@@ -31,6 +31,8 @@ class GAOKAOBenchEvaluator(BaseEvaluator):
         samples: list[EvaluationSample] = []
         demonstrations: dict[str, list[EvaluationSample]] = {}
         for path in sorted(objective_dir.glob("*.json")):
+            if len(samples) >= max_samples:
+                break
             data = json.loads(path.read_text(encoding="utf-8"))
             keyword = str(data.get("keywords") or path.stem).strip() or path.stem
             prompt_config = prompt_map.get(keyword, {})
@@ -63,7 +65,7 @@ class GAOKAOBenchEvaluator(BaseEvaluator):
                 )
             if group_samples:
                 demonstrations[keyword] = group_samples
-                samples.extend(group_samples)
+                samples.extend(group_samples[: max_samples - len(samples)])
 
         return PreparedDataset(
             dataset_key=self.key,
