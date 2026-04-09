@@ -66,21 +66,23 @@ local-benchmark-evaluator/
 ## 安装
 
 ```bash
-cd local-benchmark-evaluator
 cp .env.example .env
 ```
 
 ```bash
-cd local-benchmark-evaluator/backend
+cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -U pip
 pip install -r requirements.txt
+deactivate
+cd ..
 ```
 
 ```bash
-cd local-benchmark-evaluator/frontend
+cd frontend
 npm install
+cd ..
 ```
 
 ## 启动
@@ -88,15 +90,15 @@ npm install
 后端：
 
 ```bash
-cd local-benchmark-evaluator/backend
+cd backend
 source .venv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-前端：
+前端：（另起一个终端）
 
 ```bash
-cd local-benchmark-evaluator/frontend
+cd frontend
 npm run dev
 ```
 
@@ -111,7 +113,7 @@ npm run dev
 `backend/mock_model_server.py` 用于最小链路验证，不替代真实模型服务。
 
 ```bash
-cd local-benchmark-evaluator/backend
+cd backend
 source .venv/bin/activate
 uvicorn mock_model_server:app --host 127.0.0.1 --port 8001
 ```
