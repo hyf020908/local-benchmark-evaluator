@@ -15,53 +15,74 @@ defineProps<{
 
 <style scoped>
 .stat-card {
-  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
   padding: 20px;
-  background: white;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  min-height: 112px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.38)),
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.42), transparent 34%);
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 16px 34px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(16px) saturate(145%);
+  -webkit-backdrop-filter: blur(16px) saturate(145%);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 100px;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, rgba(14, 165, 233, 0.9), rgba(20, 184, 166, 0.9), rgba(249, 115, 22, 0.85));
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08);
-  border-color: #6366f1;
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 24px 40px rgba(15, 23, 42, 0.12);
 }
 
 .stat-card[data-tone='success'] {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+  background:
+    linear-gradient(180deg, rgba(240, 253, 250, 0.7), rgba(255, 255, 255, 0.42)),
+    radial-gradient(circle at top right, rgba(16, 185, 129, 0.18), transparent 34%);
 }
 
 .stat-card[data-tone='success'] .stat-value {
-  color: #16a34a;
+  color: #0f8a63;
 }
 
 .stat-card[data-tone='warning'] {
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+  background:
+    linear-gradient(180deg, rgba(255, 247, 237, 0.72), rgba(255, 255, 255, 0.42)),
+    radial-gradient(circle at top right, rgba(249, 115, 22, 0.18), transparent 34%);
 }
 
 .stat-card[data-tone='warning'] .stat-value {
-  color: #ea580c;
+  color: #d66a06;
 }
 
 .stat-label {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #64748b;
-  margin-bottom: 12px;
+  letter-spacing: 0.14em;
+  color: #7b8ca1;
+  margin-bottom: 16px;
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 30px;
   line-height: 1;
-  font-weight: 800;
-  color: #1e293b;
-  letter-spacing: -0.02em;
+  font-weight: 820;
+  color: #11263d;
+  letter-spacing: -0.04em;
 }
 </style>
