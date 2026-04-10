@@ -22,7 +22,7 @@ const POLL_INTERVAL_MS = 1500
 const POLL_RETRY_MS = 4000
 
 const form = reactive<EvaluationPayload>({
-  base_url: 'http://127.0.0.1:8001',
+  base_url: 'https://api.openai.com/v1',
   api_key: '',
   model: 'gpt-4o-mini',
   dataset_path: '',
@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
 
         <el-form label-position="top" class="form-grid">
           <el-form-item label="base_url">
-            <el-input v-model="form.base_url" placeholder="http://127.0.0.1:8001" />
+            <el-input v-model="form.base_url" placeholder="https://api.openai.com/v1" />
           </el-form-item>
 
           <el-form-item label="api_key">
