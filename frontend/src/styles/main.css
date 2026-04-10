@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+
 :root {
   --bg-base: #f4f7fb;
   --bg-deep: #dfe8f3;
@@ -13,26 +15,29 @@
   --shadow-md: 0 18px 48px rgba(15, 23, 42, 0.1);
   --shadow-sm: 0 10px 28px rgba(15, 23, 42, 0.08);
   --glow-cool: rgba(34, 211, 238, 0.28);
-  --glow-warm: rgba(251, 146, 60, 0.22);
+  --glow-warm: rgba(96, 165, 250, 0.18);
   --glow-rose: rgba(244, 114, 182, 0.16);
-  --hero-gradient: linear-gradient(125deg, #0f2740 0%, #0f766e 40%, #c2410c 100%);
-  --accent-gradient: linear-gradient(135deg, #0ea5e9 0%, #14b8a6 52%, #f97316 100%);
+  --hero-gradient: linear-gradient(128deg, #10243d 0%, #0f766e 46%, #2563eb 100%);
+  --accent-gradient: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 46%, #14b8a6 100%);
   --accent-gradient-soft: linear-gradient(
     135deg,
     rgba(14, 165, 233, 0.16) 0%,
-    rgba(20, 184, 166, 0.12) 52%,
-    rgba(249, 115, 22, 0.16) 100%
+    rgba(6, 182, 212, 0.12) 52%,
+    rgba(20, 184, 166, 0.14) 100%
   );
-  --font-sans:
-    'SF Pro Display', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
-    sans-serif;
+  --font-display:
+    'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-text:
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', 'Geist', 'Inter',
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-  font-family: var(--font-sans);
+  font-family: var(--font-text);
   color: var(--text-main);
   line-height: 1.6;
-  font-weight: 400;
+  font-weight: 450;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  font-synthesis-weight: none;
 }
 
 *,
@@ -50,13 +55,14 @@ body,
 
 body {
   min-height: 100vh;
+  font-family: var(--font-text);
   color: var(--text-main);
   background:
     radial-gradient(circle at 12% 16%, rgba(34, 211, 238, 0.3), transparent 26%),
-    radial-gradient(circle at 86% 14%, rgba(251, 191, 36, 0.22), transparent 23%),
-    radial-gradient(circle at 78% 82%, rgba(248, 113, 113, 0.16), transparent 24%),
+    radial-gradient(circle at 86% 14%, rgba(96, 165, 250, 0.16), transparent 23%),
+    radial-gradient(circle at 78% 82%, rgba(45, 212, 191, 0.12), transparent 24%),
     radial-gradient(circle at 24% 88%, rgba(45, 212, 191, 0.14), transparent 22%),
-    linear-gradient(155deg, #f8fbff 0%, #edf4fb 46%, #f7f2ea 100%);
+    linear-gradient(155deg, #f8fbff 0%, #edf4fb 52%, #f1f7fb 100%);
   background-attachment: fixed;
   overflow-x: hidden;
 }
@@ -91,6 +97,13 @@ a {
   color: inherit;
 }
 
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
 #app {
   position: relative;
   z-index: 1;
@@ -100,115 +113,124 @@ a {
   position: relative;
   max-width: 1460px;
   margin: 0 auto;
-  padding: 42px 28px 56px;
+  padding: 28px 28px 56px;
 }
 
 .shell::before {
   content: '';
   position: absolute;
   inset: 16px 12px auto;
-  height: 240px;
-  border-radius: 40px;
+  height: 164px;
+  border-radius: 30px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.05)),
-    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.55), transparent 32%);
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  opacity: 0.82;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.06)),
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.48), transparent 28%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  opacity: 0.74;
   pointer-events: none;
 }
 
 .hero {
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 44px;
-  margin-bottom: 34px;
-  padding: 28px 30px 18px;
+  gap: 28px;
+  margin-bottom: 22px;
+  padding: 18px 22px 10px;
 }
 
 .hero::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 32px;
+  border-radius: 26px;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.08)),
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.42), transparent 34%);
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  backdrop-filter: blur(10px) saturate(135%);
-  -webkit-backdrop-filter: blur(10px) saturate(135%);
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.06);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.12)),
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.34), transparent 30%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px) saturate(128%);
+  -webkit-backdrop-filter: blur(8px) saturate(128%);
+  box-shadow:
+    0 14px 34px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48);
   z-index: -1;
 }
 
 .eyebrow {
+  font-family: var(--font-display);
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
+  gap: 8px;
+  padding: 8px 13px;
   border-radius: 999px;
-  margin-bottom: 18px;
-  font-size: 12px;
+  margin-bottom: 12px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #0f5e6e;
-  background: rgba(255, 255, 255, 0.52);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #13576f;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.42);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    0 10px 24px rgba(15, 23, 42, 0.06);
+    inset 0 1px 0 rgba(255, 255, 255, 0.68),
+    0 8px 18px rgba(15, 23, 42, 0.05);
 }
 
 .hero h1 {
+  font-family: var(--font-display);
   margin: 0;
-  max-width: 8.5em;
-  font-size: clamp(34px, 5vw, 62px);
-  line-height: 0.98;
-  font-weight: 820;
-  letter-spacing: -0.045em;
+  max-width: 9.2em;
+  font-size: clamp(30px, 3.8vw, 48px);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.05em;
   background: var(--hero-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  text-wrap: balance;
+  text-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
 }
 
 .hero-copy {
-  max-width: 720px;
-  margin: 18px 0 0;
-  font-size: 18px;
-  line-height: 1.78;
-  color: var(--text-muted);
+  max-width: 700px;
+  margin: 12px 0 0;
+  font-size: 15.5px;
+  line-height: 1.72;
+  color: #53667c;
+  font-weight: 460;
 }
 
 .hero-meta {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  align-content: flex-start;
-  gap: 14px;
-  min-width: 280px;
-  padding-top: 18px;
+  align-content: center;
+  gap: 10px;
+  min-width: 240px;
+  max-width: 320px;
+  padding-top: 0;
 }
 
 .hero-meta span {
-  padding: 11px 17px;
+  font-family: var(--font-display);
+  padding: 8px 12px;
   border-radius: 999px;
-  color: #103047;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  color: #21455f;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.42)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.4)),
     var(--accent-gradient-soft);
-  border: 1px solid rgba(255, 255, 255, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.44);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.72),
-    0 12px 30px rgba(15, 23, 42, 0.08);
-  backdrop-filter: blur(14px) saturate(150%);
-  -webkit-backdrop-filter: blur(14px) saturate(150%);
+    0 8px 20px rgba(15, 23, 42, 0.05);
+  backdrop-filter: blur(10px) saturate(142%);
+  -webkit-backdrop-filter: blur(10px) saturate(142%);
 }
 
 .layout {
@@ -220,17 +242,17 @@ a {
 .panel {
   position: relative;
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: 26px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.42)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.44)),
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.46), transparent 38%);
-  border: 1px solid var(--border-soft);
+  border: 1px solid rgba(255, 255, 255, 0.42);
   box-shadow:
-    var(--shadow-lg),
+    0 22px 54px rgba(15, 23, 42, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.74),
     inset 0 -1px 0 rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(26px) saturate(170%);
-  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  backdrop-filter: blur(22px) saturate(158%);
+  -webkit-backdrop-filter: blur(22px) saturate(158%);
 }
 
 .panel::before {
@@ -256,10 +278,11 @@ a {
 }
 
 .panel-head h2 {
+  font-family: var(--font-display);
   margin: 0;
   font-size: 24px;
-  font-weight: 760;
-  letter-spacing: -0.03em;
+  font-weight: 700;
+  letter-spacing: -0.035em;
   color: #10243a;
 }
 
@@ -267,7 +290,8 @@ a {
   margin: 9px 0 0;
   font-size: 14px;
   line-height: 1.75;
-  color: var(--text-muted);
+  color: #5d6f84;
+  font-weight: 460;
 }
 
 .form-grid {
@@ -280,10 +304,11 @@ a {
 }
 
 .el-form-item__label {
+  font-family: var(--font-display) !important;
   padding-bottom: 8px !important;
   font-size: 13px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.02em;
+  font-weight: 650 !important;
+  letter-spacing: 0.04em;
   color: #405168 !important;
 }
 
@@ -323,7 +348,9 @@ a {
 .el-textarea__inner,
 .el-select__selected-item,
 .el-input-number .el-input__inner {
+  font-family: var(--font-text) !important;
   color: var(--text-main) !important;
+  font-weight: 460;
 }
 
 .el-input-number {
@@ -344,8 +371,9 @@ a {
 }
 
 .section-title {
+  font-family: var(--font-display);
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   color: #73849a;
@@ -373,17 +401,19 @@ a {
 }
 
 .status-header h2 {
+  font-family: var(--font-display);
   margin: 4px 0 8px;
   font-size: 31px;
   line-height: 1.04;
-  font-weight: 820;
+  font-weight: 780;
   letter-spacing: -0.045em;
   color: #0d243a;
 }
 
 .status-header p {
   margin: 0;
-  color: var(--text-muted);
+  color: #5f7287;
+  font-weight: 460;
 }
 
 .status-actions {
@@ -413,20 +443,24 @@ a {
 }
 
 .meta-item span {
+  font-family: var(--font-display);
   display: block;
   margin-bottom: 8px;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--text-soft);
 }
 
 .meta-item strong {
+  font-family: var(--font-display);
   font-size: 14px;
   line-height: 1.6;
   word-break: break-all;
   color: var(--text-main);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .stats-grid {
@@ -476,9 +510,10 @@ a {
 }
 
 .el-tabs__item {
+  font-family: var(--font-display) !important;
   height: 46px !important;
   font-size: 15px !important;
-  font-weight: 700 !important;
+  font-weight: 650 !important;
   color: #5b6f86 !important;
 }
 
@@ -487,14 +522,28 @@ a {
 }
 
 .el-tag {
+  font-family: var(--font-display) !important;
   border-radius: 999px !important;
   border: 1px solid rgba(255, 255, 255, 0.46) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  font-weight: 650 !important;
+  letter-spacing: 0.03em;
 }
 
 .el-button {
+  font-family: var(--font-display) !important;
   border-radius: 16px !important;
-  font-weight: 700 !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.01em;
+}
+
+.hero-meta span,
+.eyebrow,
+.el-tag,
+.el-button,
+.meta-item strong,
+.el-input-number .el-input__inner {
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .el-button--primary {
@@ -549,13 +598,14 @@ a {
   .hero {
     flex-direction: column;
     align-items: flex-start;
-    padding: 22px 22px 12px;
+    gap: 16px;
+    padding: 16px 18px 8px;
   }
 
   .hero-meta {
     justify-content: flex-start;
     min-width: 0;
-    padding-top: 0;
+    max-width: none;
   }
 
   .meta-grid {
@@ -565,7 +615,7 @@ a {
 
 @media (max-width: 768px) {
   .shell {
-    padding: 20px 14px 36px;
+    padding: 18px 14px 36px;
   }
 
   .left-panel,

@@ -70,19 +70,22 @@ defineProps<{
 }
 
 .stat-label {
+  font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   color: #7b8ca1;
   margin-bottom: 16px;
 }
 
 .stat-value {
+  font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 30px;
   line-height: 1;
-  font-weight: 820;
+  font-weight: 760;
   color: #11263d;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 </style>

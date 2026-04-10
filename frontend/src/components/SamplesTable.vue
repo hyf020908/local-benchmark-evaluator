@@ -64,12 +64,13 @@ const rows = computed(() => props.items.slice(0, 50))
 }
 
 .samples-table :deep(.el-table__header th) {
+  font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: rgba(255, 255, 255, 0.46) !important;
   color: #496077;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
 .samples-table :deep(.el-table__row td) {
@@ -90,6 +91,7 @@ const rows = computed(() => props.items.slice(0, 50))
   color: #30465d;
   font-size: 13px;
   line-height: 1.7;
+  font-weight: 460;
   white-space: pre-wrap;
   word-break: break-word;
 }

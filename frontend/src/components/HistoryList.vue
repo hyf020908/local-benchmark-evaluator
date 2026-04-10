@@ -54,6 +54,7 @@ const emit = defineEmits<{
   background: rgba(255, 255, 255, 0.34);
   border: 1px dashed rgba(150, 168, 189, 0.42);
   font-size: 14px;
+  font-weight: 460;
 }
 
 .history-item {
@@ -106,8 +107,10 @@ const emit = defineEmits<{
 }
 
 .history-item__head {
-  font-weight: 700;
+  font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 650;
   font-size: 16px;
+  letter-spacing: -0.02em;
   color: #17314b;
   margin-bottom: 12px;
 }
@@ -117,6 +120,7 @@ const emit = defineEmits<{
   color: #607086;
   font-size: 13px;
   margin-bottom: 12px;
+  font-weight: 460;
 }
 
 .history-item__meta .el-icon {
@@ -125,13 +129,15 @@ const emit = defineEmits<{
 }
 
 .history-item__foot {
+  font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #8192a8;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 560;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .history-item__foot span:last-child {
   color: #0f766e;
-  font-weight: 800;
+  font-weight: 700;
 }
 </style>
