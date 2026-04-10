@@ -85,44 +85,45 @@ local-benchmark-evaluator/
 
 - Python 3.10+
 - Node.js 18+
-- 可访问的 OpenAI-compatible 模型服务
+- 可访问的 OpenAI-compatible 模型服务（例如，OpenAI官方API服务/第三方OpenAI提供商/DeepSeek官方API服务等）
 
-## 安装
+
+## 快速启动
+
+### 后端
+
+#### 后端安装
 
 ```bash
 cp .env.example .env
-```
 
-```bash
 cd backend
-python -m venv .venv
+python -m venv --clear .venv
 source .venv/bin/activate
 pip install -U pip
 pip install -r requirements.txt
-deactivate
-cd ..
 ```
+
+#### 后端启动
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+### 前端
+
+另外开一个终端：
+
+#### 前端安装
 
 ```bash
 cd frontend
 npm install
-cd ..
 ```
 
-## 启动
-
-后端：
+#### 前端启动
 
 ```bash
-cd backend
-source .venv/bin/activate
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-
-前端：（另起一个终端）
-
-```bash
-cd frontend
 npm run dev
 ```
 
